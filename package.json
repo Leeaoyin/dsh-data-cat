@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "DshCat: a Navicat-style database manager for MySQL, PostgreSQL, Redis, and Elasticsearch, with SQL playground and AI copilot.",
+  "description": "Dsh-Data-Cat: a Navicat-style database manager for MySQL, PostgreSQL, Redis, and Elasticsearch, with SQL playground and AI copilot.",
   "license": "MIT",
   "keywords": [
     "dsh",
@@ -37,6 +37,7 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
+    "img/*",
     "README.md",
     "README.zh.md",
     "LICENSE"

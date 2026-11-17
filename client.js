@@ -1,5 +1,5 @@
-/**
- * DshCat Web client bundle.
+﻿/**
+ * Dsh-Data-Cat Web client bundle.
  *
  * Loaded directly by the DSH Web ModuleLoader; there is intentionally no build
  * step. The file contains the page UI, client store, authenticated Host API
@@ -23,7 +23,7 @@ window.__ModuleLoader__.load({
     // the page's `t` seat from this namespace.
     // ---------------------------------------------------------------------
     const COPY = {
-      'panel.label': ['DshCat', 'DshCat'],
+      'panel.label': ['Dsh-Data-Cat', 'Dsh-Data-Cat'],
       'panel.subtitle': ['数据库工作台', 'Database workspace'],
       'tabs.browse': ['数据浏览', 'Browse'],
       'tabs.sql': ['SQL Playground', 'SQL Playground'],
@@ -120,7 +120,7 @@ window.__ModuleLoader__.load({
       'tree.empty': ['暂无对象', 'Nothing here'],
       'tree.loadingTables': ['正在加载表…', 'Loading tables…'],
 
-      'browse.welcomeTitle': ['欢迎使用 DshCat', 'Welcome to DshCat'],
+      'browse.welcomeTitle': ['欢迎使用 Dsh-Data-Cat', 'Welcome to Dsh-Data-Cat'],
       'browse.welcomeText': ['连接 MySQL、PostgreSQL、Redis 或 Elasticsearch，然后从左侧浏览数据库与表。', 'Connect MySQL, PostgreSQL, Redis, or Elasticsearch, then browse databases and tables on the left.'],
       'browse.selectTable': ['从左侧选择一张表开始查看数据。', 'Choose a table on the left to inspect its rows.'],
       'browse.tablesTitle': ['表', 'Tables'],
@@ -226,7 +226,7 @@ window.__ModuleLoader__.load({
       'sql.statement': ['语句', 'Statement'],
       'sql.duration': ['耗时 {count} ms', '{count} ms'],
 
-      'ai.title': ['DshCat AI', 'DshCat AI'],
+      'ai.title': ['Dsh-Data-Cat AI', 'Dsh-Data-Cat AI'],
       'ai.subtitle': ['数据库助手', 'Database copilot'],
       'ai.button': ['AI 助手', 'AI copilot'],
       'ai.open': ['展开 AI 助手', 'Open AI copilot'],
@@ -249,11 +249,11 @@ window.__ModuleLoader__.load({
       'ai.suggestion.rows': ['查看当前表的前 100 行', 'Show the first 100 rows'],
       'ai.suggestion.design': ['帮我设计一张用户表', 'Design a users table'],
       'ai.composerHint': ['Enter 发送 · Shift+Enter 换行', 'Enter to send · Shift+Enter for a new line'],
-      'ai.openPanel': ['打开 DshCat', 'Open DshCat'],
+      'ai.openPanel': ['打开 Dsh-Data-Cat', 'Open Dsh-Data-Cat'],
       'ai.noSource': ['先选择一个数据源和数据库，AI 才能读取结构并生成查询。', 'Choose a data source and database so the AI can read the schema.'],
       'ai.noSourceAction': ['在左侧数据源树中添加或连接一个实例。', 'Add or connect an instance in the data-source tree on the left.'],
       'ai.you': ['你', 'You'],
-      'ai.assistant': ['DshCat AI', 'DshCat AI'],
+      'ai.assistant': ['Dsh-Data-Cat AI', 'Dsh-Data-Cat AI'],
       'ai.plan': ['建议执行的语句', 'Proposed statement'],
       'ai.riskRead': ['只读', 'Read-only'],
       'ai.riskWrite': ['写入', 'Write'],
@@ -283,7 +283,7 @@ window.__ModuleLoader__.load({
       'ai.collapsed': ['AI 助手', 'AI'],
 
       'errors.generic': ['操作失败', 'Something went wrong'],
-      'errors.connection': ['无法连接 DshCat Host API。', 'Could not reach the DshCat Host API.'],
+      'errors.connection': ['无法连接 Dsh-Data-Cat Host API。', 'Could not reach the Dsh-Data-Cat Host API.'],
       'errors.unauthorized': ['页面会话已失效，请刷新页面后重试。', 'The page session expired. Refresh and try again.'],
       'errors.timeout': ['请求超时，请稍后重试。', 'The request timed out. Try again.'],
       'errors.copy': ['复制失败', 'Copy failed'],
@@ -496,7 +496,7 @@ window.__ModuleLoader__.load({
         });
       } catch (error) {
         if (error && error.name === 'AbortError') throw new ApiError('请求超时，请稍后重试。', 'timeout');
-        throw new ApiError('无法连接 DshCat Host API，请确认插件 Host 半已加载。', 'network');
+        throw new ApiError('无法连接 Dsh-Data-Cat Host API，请确认插件 Host 半已加载。', 'network');
       } finally {
         clearTimeout(timer);
       }
@@ -508,10 +508,10 @@ window.__ModuleLoader__.load({
       }
       if (response.status === 401) throw new ApiError('页面会话已失效，请刷新页面后重试。', 'unauthorized');
       if (!response.ok) {
-        throw new ApiError(body?.error?.message || `DshCat API 返回 HTTP ${response.status}`, body?.error?.code || 'http_error');
+        throw new ApiError(body?.error?.message || `Dsh-Data-Cat API 返回 HTTP ${response.status}`, body?.error?.code || 'http_error');
       }
       if (!body || body.ok !== true) {
-        throw new ApiError(body?.error?.message || 'DshCat 请求失败。', body?.error?.code || 'request_failed');
+        throw new ApiError(body?.error?.message || 'Dsh-Data-Cat 请求失败。', body?.error?.code || 'request_failed');
       }
       return body.value;
     }

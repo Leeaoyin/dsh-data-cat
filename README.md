@@ -1,4 +1,4 @@
-# Dsh-Data-Cat
+# DshDataCat
 
 **English** | [简体中文](README.zh.md)
 
@@ -8,7 +8,7 @@
 [![Databases](https://img.shields.io/badge/Databases-MySQL%20%7C%20PostgreSQL%20%7C%20Redis%20%7C%20Elasticsearch-4479A1)](#support-matrix)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
-Dsh-Data-Cat is a DeepSeek Harness (DSH) plugin that adds a Navicat-style database workspace to the sidebar. It runs in DSH Web and DeepSeek Harness Desktop (`deepseek-harness-app`) and supports MySQL, PostgreSQL, Redis, and Elasticsearch. It includes table browsing, type-aware cell editing with undo, database management, SQL Playground, data exports, and a page-scoped AI assistant.
+DshDataCat is a DeepSeek Harness (DSH) plugin that adds a Navicat-style database workspace to the sidebar. It runs in DSH Web and DeepSeek Harness Desktop (`deepseek-harness-app`) and supports MySQL, PostgreSQL, Redis, and Elasticsearch. It includes table browsing, type-aware cell editing with undo, database management, SQL Playground, data exports, and a page-scoped AI assistant.
 
 Database connections are made by the DSH Host. The browser calls the Host through DSH's authenticated same-origin session.
 
@@ -47,7 +47,7 @@ Database connections are made by the DSH Host. The browser calls the Host throug
   </tr>
 </table>
 
-<sub>Screenshots were captured before the DshCat → Dsh-Data-Cat rename; some UI labels still show the previous name.</sub>
+<sub>Screenshots were captured before the DshCat → DshDataCat rename; some UI labels still show the previous name.</sub>
 
 ## Features
 
@@ -89,7 +89,7 @@ Database connections are made by the DSH Host. The browser calls the Host throug
 
 ### AI assistant
 
-- The AI entry point and chat window appear only inside the Dsh-Data-Cat page, never on other conversation pages.
+- The AI entry point and chat window appear only inside the DshDataCat page, never on other conversation pages.
 - The window can be moved by its title bar and resized from its four corners; on narrow screens it becomes a bottom sheet inside the panel.
 - Reads the current database schema and a small sample of values to generate queries and explain risk.
 - Read-only queries run automatically and open SQL Playground for results. Writes and other high-risk statements require confirmation.
@@ -138,26 +138,26 @@ This is the recommended method for the official DeepSeek Harness Desktop app. No
 
 3. In DeepSeek Harness Desktop, open **Plugins** and click **Add plugin**.
 4. Select the `dshcat` directory containing `package.json` and `cordis.patch.yml`, then wait for installation.
-5. Confirm that **Dsh-Data-Cat** is enabled. Enable it from the plugin list if necessary.
-6. Start a new session, or refresh/restart the app. **Dsh-Data-Cat** appears in the sidebar.
+5. Confirm that **DshDataCat** is enabled. Enable it from the plugin list if necessary.
+6. Start a new session, or refresh/restart the app. **DshDataCat** appears in the sidebar.
 
 Local directory installs are linked, so **do not move or delete the `dshcat` directory** after installation. If you move it, remove and re-add the plugin in Plugins. Run `pnpm install` in the directory after updating dependencies.
 
 ### Local directory installation (general)
 
-For DSH Web or a manually managed profile, use **Plugins → Add plugin** and select this directory. The internal bundle name remains `@local/dshcat`; the visible plugin name is **Dsh-Data-Cat**. Open **Dsh-Data-Cat** from the sidebar after starting a new session or refreshing the page.
+For DSH Web or a manually managed profile, use **Plugins → Add plugin** and select this directory. The internal bundle name remains `@local/dshcat`; the visible plugin name is **DshDataCat**. Open **DshDataCat** from the sidebar after starting a new session or refreshing the page.
 
 ### Updating during development
 
 `client.js` is loaded directly by the DSH Web client; there is no build step.
 
 1. Edit `client.js`, files under `lib/`, or other plugin files.
-2. Reload the Dsh-Data-Cat plugin, or disable and enable it in Plugins.
+2. Reload the DshDataCat plugin, or disable and enable it in Plugins.
 3. Refresh DSH so the browser loads the new client bundle.
 
 ## Quick start
 
-1. Open **Dsh-Data-Cat → Add data source** in the sidebar.
+1. Open **DshDataCat → Add data source** in the sidebar.
 2. Choose a source type and enter a connection URL:
 
    ```text
@@ -172,7 +172,7 @@ For DSH Web or a manually managed profile, use **Plugins → Add plugin** and se
 3. Save and connect, then choose a database and table.
 4. Run SQL in SQL Playground, or open **AI assistant** from the page header and describe what you need.
 
-> Redis uses port **6379** by default. If the connection is refused, confirm that the service is running and the port is correct. Dsh-Data-Cat now reports the target address and the underlying connection error.
+> Redis uses port **6379** by default. If the connection is refused, confirm that the service is running and the port is correct. DshDataCat now reports the target address and the underlying connection error.
 
 ## Data and security
 
@@ -248,13 +248,13 @@ Before committing:
 - Redis displays `db0`, `db1`, … as databases and `Keys` as a virtual table. Elasticsearch displays indices as databases and `Documents` as a virtual table.
 - There is no SSH tunnel, certificate-file picker, or connection-pool management UI. SSL options are expressed through the URL using `sslmode` / `tls`.
 - The SQL formatter is lightweight and not a complete SQL parser. Review complex statements after formatting.
-- The AI assistant is available only inside the Dsh-Data-Cat page and depends on the configured DSH default model.
+- The AI assistant is available only inside the DshDataCat page and depends on the configured DSH default model.
 
 ## Troubleshooting
 
 ### Redis connection refused / `ECONNREFUSED`
 
-Confirm that Redis is running and check the URL port. The default is `6379`, not `3679`. Dsh-Data-Cat now shows the target address and the underlying connection error.
+Confirm that Redis is running and check the URL port. The default is `6379`, not `3679`. DshDataCat now shows the target address and the underlying connection error.
 
 ### MySQL/PostgreSQL connection failed
 
@@ -262,11 +262,11 @@ Check the Host, port, firewall, credentials, permissions, and whether the defaul
 
 ### AI assistant does not appear
 
-The AI entry point is in the Dsh-Data-Cat header only. Configure the DSH default model and select an instance and database on the page.
+The AI entry point is in the DshDataCat header only. Configure the DSH default model and select an instance and database on the page.
 
 ### The page does not reflect changes
 
-Reload the Dsh-Data-Cat plugin in Plugins, then refresh the page. The client bundle is loaded with the page, so reloading the plugin alone may not replace already-loaded JavaScript.
+Reload the DshDataCat plugin in Plugins, then refresh the page. The client bundle is loaded with the page, so reloading the plugin alone may not replace already-loaded JavaScript.
 
 ## Contributing
 
@@ -299,5 +299,5 @@ ai
 Released under the [MIT License](LICENSE).
 
 ```text
-Copyright (c) 2026 Dsh-Data-Cat contributors
+Copyright (c) 2026 DshDataCat contributors
 ```

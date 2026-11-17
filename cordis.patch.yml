@@ -1,0 +1,3 @@
+- insert:
+    - id: dshcat
+      name: '@local/dshcat'

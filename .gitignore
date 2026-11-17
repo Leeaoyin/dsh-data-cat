@@ -1,0 +1,15 @@
+node_modules/
+.pnpm-store/
+.tmp*/
+*.log
+*.tgz
+
+.env
+.env.*
+/datasources.json
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+coverage/

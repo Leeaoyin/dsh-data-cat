@@ -8,7 +8,7 @@
 [![Databases](https://img.shields.io/badge/Databases-MySQL%20%7C%20PostgreSQL%20%7C%20Redis%20%7C%20Elasticsearch-4479A1)](#support-matrix)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
-DshDataCat is a DeepSeek Harness (DSH) plugin that adds a Navicat-style database workspace with an AI copilot to the sidebar. It runs in DSH Web and DeepSeek Harness Desktop (`deepseek-harness-app`) and supports MySQL, PostgreSQL, Redis, and Elasticsearch. It includes sortable table browsing with stable pagination, staged transactional cell editing, database management, SQL Playground, UI and Agent exports, schema diff previews, and a page-scoped AI assistant.
+DshDataCat is a DeepSeek Harness (DSH) plugin that adds a database workspace with an AI copilot to the sidebar. It runs in DSH Web and DeepSeek Harness Desktop (`deepseek-harness-app`) and supports MySQL, PostgreSQL, Redis, and Elasticsearch. It includes sortable table browsing with stable pagination, staged transactional cell editing, database management, SQL Playground, UI and Agent exports, schema diff previews, and a page-scoped AI assistant.
 
 Database connections are made by the DSH Host. The browser calls the Host through DSH's authenticated same-origin session.
 

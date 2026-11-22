@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "DshDataCat",
-    "description": "侧栏中的 Navicat 风格数据库管理工具。可连接 MySQL、PostgreSQL、Redis 和 Elasticsearch，在 MySQL/PostgreSQL 实例中新建/删除数据库（MySQL 默认 utf8mb4），浏览数据库、表与数据行并按字段快速筛选，双击 MySQL/PostgreSQL 有主键表的单元格按字段类型编辑值并撤销最近 3 次单元格修改，导出表结构 SQL 或表结构与数据 SQL；在带语法高亮和格式化按钮的 SQL Playground 执行选中或全部语句；在 DshDataCat 页面内通过 AI 助手针对当前数据库生成并执行查询（仅在该页面显示），写入及其他高危操作需要二次确认。AI 请求会包含所选数据库的对象名、字段和少量样例值，并发送给当前 DSH 默认模型。连接由 Host 管理，数据源配置（含密码）保存在本机 DSH_HOME/dshcat/datasources.json。"
+    "description": "DSH 侧栏中的数据库管理工具。可连接 MySQL、PostgreSQL、Redis 和 Elasticsearch；浏览数据库、表和数据行，支持列排序、筛选、稳定分页和估算/精确行数；按字段类型暂存单元格修改，显示 SQL 预览并在一个事务中提交；新建/删除 MySQL/PostgreSQL 数据库，导出表结构或表结构与数据；在带语法高亮和格式化按钮的 SQL Playground 执行选中或全部语句；页面内的 AI 助手默认只读取 schema，DSH Agent 还可调用查询、元数据、CSV/XLSX 导出、数据字典和 schema diff 工具。连接由 Host 管理；密码保存在 DSH 凭据服务，非密数据源元数据保存在 DSH_HOME/dshcat/datasources.json。写入和高危操作需要确认。"
   }
 }

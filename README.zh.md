@@ -8,7 +8,7 @@
 [![Databases](https://img.shields.io/badge/Databases-MySQL%20%7C%20PostgreSQL%20%7C%20Redis%20%7C%20Elasticsearch-4479A1)](#支持矩阵)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#参与贡献)
 
-DshDataCat 是一个 **DeepSeek Harness (DSH) 插件**，可在 DSH Web 或 DeepSeek Harness Desktop（deepseek-harness-app）中使用，在左侧栏提供 Navicat 风格、带 AI Copilot 的数据库工作台。支持 MySQL、PostgreSQL、Redis 和 Elasticsearch，包含表数据浏览与排序、稳定分页、待提交事务式单元格编辑、数据库管理、SQL Playground、界面与 Agent 导出、schema diff 预览和页面内的 AI 助手。
+DshDataCat 是一个 **DeepSeek Harness (DSH) 插件**，可在 DSH Web 或 DeepSeek Harness Desktop（deepseek-harness-app）中使用，在左侧栏提供带 AI Copilot 的数据库工作台。支持 MySQL、PostgreSQL、Redis 和 Elasticsearch，包含表数据浏览与排序、稳定分页、待提交事务式单元格编辑、数据库管理、SQL Playground、界面与 Agent 导出、schema diff 预览和页面内的 AI 助手。
 
 数据库连接只发生在 DSH Host；浏览器通过 DSH 同源签名会话调用 Host API。
 

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "DshDataCat: a Navicat-style database manager for MySQL, PostgreSQL, Redis, and Elasticsearch, with SQL playground and AI copilot.",
+  "description": "DshDataCat: a database manager for MySQL, PostgreSQL, Redis, and Elasticsearch, with SQL playground, staged edits, and AI assistant.",
   "license": "MIT",
   "keywords": [
     "dsh",
@@ -15,8 +15,7 @@
     "redis",
     "elasticsearch",
     "sql-editor",
-    "ai",
-    "navicat"
+    "ai"
   ],
   "engines": {
     "node": ">=20"

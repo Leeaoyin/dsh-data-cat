@@ -47,8 +47,6 @@ Database connections are made by the DSH Host. The browser calls the Host throug
   </tr>
 </table>
 
-<sub>Screenshots predate the rename and the latest sorting/pending-edit/Agent-tool additions; some UI labels still show the previous name.</sub>
-
 ## Highlights
 
 - Sort by any real column, with a primary-key tiebreaker; PostgreSQL `ctid` / MySQL full-column ordering for tables without a primary key.
@@ -295,7 +293,6 @@ Before committing:
 - Do not add `node_modules/`, `.tmp*`, logs, `.env`, or `datasources.json`.
 - Keep `client.js` loadable by the browser without Node built-ins (`fs`, `path`, etc.).
 - Use DSH theme tokens (`--dsw-*`) for UI styling instead of hard-coded light/dark colors.
-- Update this README's security notes when changing credential or source behavior.
 
 ## Known limitations
 
@@ -314,7 +311,7 @@ Before committing:
 - The AI assistant is available only inside the DshDataCat page and depends on the configured DSH default model.
 - Source policies are enforced by the Host but currently have no dedicated editor in the UI; edit them in `datasources.json` or through the API.
 - Browser-initiated writes use the authenticated in-page confirmation. The official `ctx.approval` seam is used when an initiating Agent is present. Agent tools cover query, metadata, CSV/XLSX export, data dictionaries, and schema diff; less common UI operations are not exposed as tools.
-- The Web client is still a single `client.js` bundle and loads immediately; the source split/build and streaming-export work is not part of this change.
+- The Web client is a single `client.js` bundle and loads immediately; source split/build and streaming export are not implemented.
 - Agent tools cover query, metadata discovery, CSV/XLSX export, Markdown data dictionaries, and schema diff for table sets/columns/indexes/constraints. Triggers are not implemented yet, and missing-table migration is report-only. Schema diff output is a reviewable preview and is never executed automatically.
 - There are no testcontainers-backed four-engine integration tests yet; the committed suite is unit-level.
 
@@ -346,7 +343,6 @@ Issues and pull requests are welcome.
 
 - Run `pnpm check` and `pnpm test` before submitting.
 - Do not commit `node_modules/`, `.tmp*`, `.env`, or any `datasources.json` / `.credentials.yaml`.
-- Update the README security notes when changing database adapters or credential behavior.
 - Describe the purpose, affected data sources, and verification scope in a pull request.
 
 ## GitHub Topics

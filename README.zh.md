@@ -47,8 +47,6 @@ DshDataCat 是一个 **DeepSeek Harness (DSH) 插件**，可在 DSH Web 或 Deep
   </tr>
 </table>
 
-<sub>截图拍摄于更名和表格排序/待提交编辑/Agent 工具更新之前，界面中的部分名称仍显示为 DshCat。</sub>
-
 ## 亮点
 
 - 按真实列排序，自动追加主键作为稳定次级键；无主键表在 PostgreSQL 使用 `ctid`、MySQL 使用全列排序。
@@ -294,7 +292,6 @@ pnpm test
 - 没有把 `node_modules/`、`.tmp*`、日志、`.env` 或 `datasources.json` 加入版本库。
 - `client.js` 保持浏览器可直接加载，不引入 Node 内置模块（`fs`、`path` 等）。
 - 新增 UI 使用 DSH 主题 token（`--dsw-*`），不要写死亮色/暗色值。
-- 修改数据源/凭据逻辑时同步更新本 README 的安全说明。
 
 ## 已知限制
 
@@ -313,7 +310,7 @@ pnpm test
 - AI 助手只在 DshDataCat 页面内可用，依赖 DSH 默认模型配置。
 - 数据源策略由 Host 执行，但尚无专用 UI 编辑器；可通过 `datasources.json` 或 API 修改。
 - 浏览器发起的写入使用带签名的页面内确认；只有存在发起 Agent 时才使用官方 `ctx.approval` 通道。Agent 工具目前覆盖查询、元数据、CSV/XLSX 导出、数据字典和 schema diff；较少使用的界面操作尚未全部暴露为工具。
-- Web 客户端仍是单个立即加载的 `client.js`；前端源码拆分/构建、流式导出尚未在本轮完成。
+- Web 客户端是单个立即加载的 `client.js`；前端源码拆分/构建和流式导出尚未实现。
 - Agent 工具目前覆盖查询、元数据发现、CSV/XLSX 导出、Markdown 数据字典，以及表集合/列/索引/约束级 schema diff；触发器比较尚未实现，缺失表迁移只报告不生成 CREATE/DROP。schema diff 只生成预览，不会自动执行。
 - 尚未提供 testcontainers 四引擎集成测试；当前提交的是单元级安全测试。
 
@@ -345,7 +342,6 @@ AI 入口只在 DshDataCat 页面顶部。确认已配置 DSH 默认模型，并
 
 - 提交前请运行 `pnpm check` 和 `pnpm test`。
 - 不要提交 `node_modules/`、`.tmp*`、`.env`、`datasources.json` 或 `.credentials.yaml`。
-- 修改数据库适配器或凭据逻辑时，请同步更新 README 的安全说明。
 - 提交 Pull Request 时请说明变更目的、影响的数据源以及已验证的范围。
 
 ## GitHub Topics

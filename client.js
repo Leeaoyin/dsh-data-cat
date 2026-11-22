@@ -77,14 +77,14 @@ window.__ModuleLoader__.load({
       'source.usernamePlaceholder': ['可选', 'Optional'],
       'source.password': ['密码', 'Password'],
       'source.passwordPlaceholder': ['可选', 'Optional'],
-      'source.passwordSaved': ['已保存密码；留空保持不变。', 'A password is saved; leave blank to keep it.'],
+      'source.passwordSaved': ['密码已保存在 DSH 凭据服务；留空保持不变。', 'A password is saved in the DSH credential store; leave blank to keep it.'],
       'source.clearPassword': ['清除已保存的密码', 'Clear the saved password'],
       'source.database': ['默认数据库', 'Default database'],
       'source.databasePlaceholder': ['可选，例如 postgres 或 db0', 'Optional, for example postgres or db0'],
       'source.databaseHint': ['连接后会自动选中；也可以留空。', 'Selected automatically after connecting; optional.'],
       'source.testSuccess': ['连接成功：{version} · {latency} ms', 'Connected: {version} · {latency} ms'],
       'source.testFailed': ['连接失败', 'Connection failed'],
-      'source.storageNote': ['数据源配置保存在本机的 DSH_HOME/dshcat/datasources.json；请自行保护该文件。', 'Data-source settings are stored in DSH_HOME/dshcat/datasources.json on this machine; protect that file.'],
+      'source.storageNote': ['数据源元数据保存在 DSH_HOME/dshcat/datasources.json；密码由 DSH 凭据服务托管。', 'Source metadata is stored in DSH_HOME/dshcat/datasources.json; passwords are managed by the DSH credential store.'],
       'source.deleteTitle': ['删除数据源', 'Delete data source'],
       'source.deleteText': ['确定删除“{name}”吗？已保存的密码也会被移除。', 'Delete “{name}”? Its saved password will also be removed.'],
       'source.deleteConfirm': ['删除', 'Delete'],
@@ -146,7 +146,24 @@ window.__ModuleLoader__.load({
       'browse.filterAll': ['所有字段', 'All fields'],
       'browse.filterHint': ['输入值后按 Enter 应用筛选', 'Press Enter to apply the filter'],
       'browse.filterActive': ['已筛选：{field} {op} {value}', 'Filtered: {field} {op} {value}'],
-      'browse.columnFilterHint': ['点击列头快速筛选此字段', 'Click a column header to filter by this field'],
+      'browse.columnFilterHint': ['点击列头排序，点击漏斗筛选此字段', 'Click a column header to sort, or the funnel to filter by this field'],
+      'browse.sortHint': ['点击列头排序：升序 → 降序 → 恢复默认', 'Click a header to sort: ascending → descending → default'],
+      'browse.noPkPaging': ['该表没有主键，分页顺序依赖数据库物理顺序；并发写入时可能漏行或重复。', 'This table has no primary key; paging depends on physical order and can miss or repeat rows during concurrent writes.'],
+      'browse.estimatedRows': ['约 {count} 行', '~{count} rows'],
+      'browse.exactCount': ['精确计数', 'Exact count'],
+      'browse.counting': ['统计中…', 'Counting…'],
+      'browse.pendingCount': ['待提交 {count} 处修改', '{count} pending change(s)'],
+      'browse.pendingHint': ['所有修改会在一个事务中提交，失败整体回滚。', 'All changes commit in one transaction and roll back together on failure.'],
+      'browse.pendingSql': ['将执行的 SQL', 'SQL to execute'],
+      'browse.pendingPreview': ['正在生成 SQL diff…', 'Generating SQL diff…'],
+      'browse.commitEdits': ['提交修改', 'Commit changes'],
+      'browse.discardEdits': ['放弃', 'Discard'],
+      'browse.committing': ['提交中…', 'Committing…'],
+      'browse.pendingBlocked': ['请先提交或放弃待提交的修改。', 'Commit or discard pending changes first.'],
+      'browse.editPkUnsupported': ['待提交模式不支持修改主键字段。', 'Primary-key columns cannot be edited in pending mode.'],
+      'browse.pendingCommitted': ['已提交 {count} 处修改', 'Committed {count} change(s)'],
+      'browse.pendingCommitFailed': ['提交失败，修改已回滚', 'Commit failed; all changes were rolled back'],
+      'browse.pendingLeave': ['有未提交的修改，离开将放弃这些修改。继续？', 'You have uncommitted changes. Leave and discard them?'],
       'browse.exportStructure': ['导出结构 SQL', 'Export DDL'],
       'browse.exportData': ['导出结构 + 数据', 'Export DDL + data'],
       'browse.exportRedisStructure': ['导出结构脚本', 'Export structure script'],
@@ -159,7 +176,7 @@ window.__ModuleLoader__.load({
       'browse.closeTable': ['返回表概览', 'Back to tables'],
       'browse.null': ['NULL', 'NULL'],
       'browse.cellHint': ['点击列头筛选', 'Click the header to filter'],
-      'browse.editCellHint': ['双击单元格编辑数据', 'Double-click a cell to edit'],
+      'browse.editCellHint': ['双击单元格编辑；修改先进入待提交区，再一次性提交', 'Double-click a cell to edit; changes stage first, then commit together'],
       'browse.editCellTitle': ['编辑单元格', 'Edit cell'],
       'browse.editNoPk': ['该表没有主键，无法安全编辑单元格。', 'This table has no primary key, so cells cannot be edited safely.'],
       'browse.unsupportedEdit': ['当前数据源暂不支持单元格编辑。', 'Cell editing is not supported for this data source.'],
@@ -425,9 +442,17 @@ window.__ModuleLoader__.load({
           hasMore: false,
           loading: false,
           filters: [],
+          sort: [],
           durationMs: null,
           total: null,
-          truncatedScan: false
+          estimatedTotal: null,
+          totalIsEstimate: false,
+          exactTotal: null,
+          orderHint: null,
+          truncatedScan: false,
+          pendingEdits: [],
+          pendingSql: [],
+          pendingLoading: false
         },
         playground: {
           sql: '',
@@ -528,7 +553,7 @@ window.__ModuleLoader__.load({
       return table.label || table.name;
     }
 
-    const MYSQL_SYSTEM_DATABASES = new Set(['mysql', 'information_schema', 'performance_schema', 'sys']);
+    const MYSQL_SYSTEM_DATABASES = new Set(['mysql', 'information_schema', 'performance_schema', 'sys', '__recycle_bin__']);
     const PG_SYSTEM_DATABASES = new Set(['postgres', 'template0', 'template1']);
 
     /** System databases are readable but never deletable from the UI. */
@@ -595,7 +620,7 @@ window.__ModuleLoader__.load({
       return messageOf(error) || fallback || '操作失败';
     }
 
-    function createActions() {
+    function createActions(t) {
       let connectSeq = 0;
       let tableSeq = 0;
       let dataSeq = 0;
@@ -631,6 +656,7 @@ window.__ModuleLoader__.load({
       async function connect(sourceId, options = {}) {
         if (!sourceId) return;
         if (store.get().playground.running) return;
+        if (store.get().tableData.pendingEdits?.length > 0 && window.confirm(t('browse.pendingLeave')) !== true) return;
         const seq = ++connectSeq;
         tableSeq += 1;
         dataSeq += 1;
@@ -648,7 +674,7 @@ window.__ModuleLoader__.load({
           tablesError: null,
           table: null,
           error: null,
-          tableData: { ...state.tableData, columns: [], rows: [], page: 1, hasMore: false, filters: [], loading: false, durationMs: null, total: null, truncatedScan: false }
+          tableData: { ...state.tableData, columns: [], rows: [], page: 1, hasMore: false, filters: [], sort: [], loading: false, durationMs: null, total: null, estimatedTotal: null, totalIsEstimate: false, exactTotal: null, orderHint: null, truncatedScan: false, pendingEdits: [], pendingSql: [], pendingLoading: false }
         }));
         try {
           const result = await request('sources.connect', { id: sourceId });
@@ -698,6 +724,7 @@ window.__ModuleLoader__.load({
         if (!databaseName) return;
         if (!store.get().sourceId) return;
         if (store.get().playground.running) return;
+        if (store.get().tableData.pendingEdits?.length > 0 && window.confirm(t('browse.pendingLeave')) !== true) return;
         tableSeq += 1;
         dataSeq += 1;
         store.set(state => ({
@@ -707,7 +734,7 @@ window.__ModuleLoader__.load({
           tables: [],
           tablesError: null,
           tablesBusy: true,
-          tableData: { ...state.tableData, columns: [], rows: [], page: 1, hasMore: false, filters: [], loading: false, durationMs: null, total: null, truncatedScan: false }
+          tableData: { ...state.tableData, columns: [], rows: [], page: 1, hasMore: false, filters: [], sort: [], loading: false, durationMs: null, total: null, estimatedTotal: null, totalIsEstimate: false, exactTotal: null, orderHint: null, truncatedScan: false, pendingEdits: [], pendingSql: [], pendingLoading: false }
         }));
         await loadTables(databaseName);
       }
@@ -734,6 +761,8 @@ window.__ModuleLoader__.load({
       }
 
       async function selectTable(table) {
+        const current = store.get();
+        if (current.tableData.pendingEdits?.length > 0 && window.confirm(t('browse.pendingLeave')) !== true) return;
         dataSeq += 1;
         store.set(state => ({
           ...state,
@@ -746,10 +775,18 @@ window.__ModuleLoader__.load({
             page: 1,
             hasMore: false,
             filters: [],
+            sort: [],
             loading: true,
             durationMs: null,
             total: null,
-            truncatedScan: false
+            estimatedTotal: null,
+            totalIsEstimate: false,
+            exactTotal: null,
+            orderHint: null,
+            truncatedScan: false,
+            pendingEdits: [],
+            pendingSql: [],
+            pendingLoading: false
           }
         }));
         await loadTableData({ page: 1, filters: [] });
@@ -759,13 +796,18 @@ window.__ModuleLoader__.load({
         const state = store.get();
         const table = overrides.table || state.table;
         if (!state.sourceId || !state.database || !table) return;
+        if (overrides.force !== true && state.tableData.pendingEdits?.length > 0) {
+          reportError(new ApiError(t('browse.pendingBlocked'), 'pending_edits'));
+          return;
+        }
         const seq = ++dataSeq;
         const page = overrides.page || state.tableData.page || 1;
         const pageSize = overrides.pageSize || state.tableData.pageSize || PAGE_SIZE;
         const filters = overrides.filters !== undefined ? overrides.filters : state.tableData.filters;
+        const sort = overrides.sort !== undefined ? overrides.sort : state.tableData.sort || [];
         store.set(state => ({
           ...state,
-          tableData: { ...state.tableData, page, pageSize, filters, loading: true }
+          tableData: { ...state.tableData, page, pageSize, filters, sort, loading: true }
         }));
         try {
           const result = await request('table.data', {
@@ -775,7 +817,8 @@ window.__ModuleLoader__.load({
             schema: table.schema,
             page,
             pageSize,
-            filters
+            filters,
+            sort
           }, 60_000);
           if (seq !== dataSeq) return;
           store.set(state => ({
@@ -789,8 +832,13 @@ window.__ModuleLoader__.load({
               hasMore: Boolean(result.hasMore),
               loading: false,
               filters,
+              sort: result.sort || sort,
               durationMs: result.durationMs ?? null,
               total: result.total ?? null,
+              estimatedTotal: result.estimatedTotal ?? null,
+              totalIsEstimate: Boolean(result.totalIsEstimate),
+              exactTotal: null,
+              orderHint: result.orderHint || null,
               truncatedScan: Boolean(result.truncatedScan)
             },
             error: null
@@ -800,6 +848,133 @@ window.__ModuleLoader__.load({
           store.set(state => ({ ...state, tableData: { ...state.tableData, loading: false } }));
           reportError(error);
         }
+      }
+
+      async function countTableRows() {
+        const state = store.get();
+        if (!state.sourceId || !state.database || !state.table) return;
+        try {
+          const result = await request('table.count', {
+            id: state.sourceId,
+            database: state.database,
+            table: state.table.name,
+            schema: state.table.schema,
+            filters: state.tableData.filters || []
+          }, 60_000);
+          store.set(state => ({
+            ...state,
+            tableData: {
+              ...state.tableData,
+              exactTotal: result.count?.total ?? null,
+              totalIsEstimate: false
+            }
+          }));
+        } catch (error) {
+          reportError(error);
+        }
+      }
+
+      async function previewCellEdits(edits) {
+        const state = store.get();
+        if (!state.sourceId || !state.database || !state.table) return [];
+        const result = await request('table.previewEdits', {
+          id: state.sourceId,
+          database: state.database,
+          table: state.table.name,
+          schema: state.table.schema,
+          edits
+        }, 30_000);
+        return Array.isArray(result.statements) ? result.statements : [];
+      }
+
+      async function stageCellEdit(edit) {
+        const state = store.get();
+        if (!state.sourceId || !state.database || !state.table) return;
+        const key = `${edit.rowIndex}\0${edit.column}`;
+        const existing = (state.tableData.pendingEdits || []).find(item => `${item.rowIndex}\0${item.column}` === key);
+        const nextEdit = {
+          ...edit,
+          beforeValue: existing ? existing.beforeValue : edit.beforeValue
+        };
+        const pending = [...(state.tableData.pendingEdits || []).filter(item => `${item.rowIndex}\0${item.column}` !== key), nextEdit];
+        const columns = state.tableData.columns || [];
+        const columnIndex = columns.findIndex(column => column.name === edit.column);
+        const rows = state.tableData.rows.map((row, rowIndex) => {
+          if (rowIndex !== edit.rowIndex) return row;
+          if (Array.isArray(row)) {
+            const copy = [...row];
+            copy[columnIndex] = edit.value;
+            return copy;
+          }
+          return { ...row, [edit.column]: edit.value };
+        });
+        store.set(state => ({
+          ...state,
+          tableData: {
+            ...state.tableData,
+            rows,
+            pendingEdits: pending,
+            pendingSql: [],
+            pendingLoading: true
+          }
+        }));
+        const seq = ++dataSeq;
+        try {
+          const statements = await previewCellEdits(pending);
+          if (seq !== dataSeq) return;
+          store.set(state => ({ ...state, tableData: { ...state.tableData, pendingSql: statements, pendingLoading: false } }));
+        } catch (error) {
+          if (seq !== dataSeq) return;
+          store.set(state => ({ ...state, tableData: { ...state.tableData, pendingLoading: false } }));
+          reportError(error);
+        }
+      }
+
+      async function discardCellEdits() {
+        const state = store.get();
+        if (!state.table) return;
+        dataSeq += 1;
+        store.set(state => ({
+          ...state,
+          tableData: {
+            ...state.tableData,
+            pendingEdits: [],
+            pendingSql: [],
+            pendingLoading: false,
+            rows: []
+          }
+        }));
+        await loadTableData({ page: state.tableData.page, force: true });
+      }
+
+      async function commitCellEdits() {
+        const state = store.get();
+        if (!state.sourceId || !state.database || !state.table || !(state.tableData.pendingEdits || []).length) return null;
+        dataSeq += 1;
+        const edits = state.tableData.pendingEdits.map(item => ({
+          column: item.column,
+          value: item.value,
+          pk: item.pk
+        }));
+        const result = await request('table.commitEdits', {
+          id: state.sourceId,
+          database: state.database,
+          table: state.table.name,
+          schema: state.table.schema,
+          edits
+        }, 120_000);
+        const count = result.commit?.updated ?? edits.length;
+        store.set(state => ({
+          ...state,
+          tableData: {
+            ...state.tableData,
+            pendingEdits: [],
+            pendingSql: [],
+            pendingLoading: false
+          }
+        }));
+        await loadTableData({ page: 1, force: true });
+        return { ...result, count };
       }
 
       async function refreshTables() {
@@ -844,7 +1019,7 @@ window.__ModuleLoader__.load({
             tablesError: null,
             table: null,
             sourceBusy: false,
-            tableData: { ...state.tableData, columns: [], rows: [], page: 1, hasMore: false, filters: [] }
+            tableData: { ...state.tableData, columns: [], rows: [], page: 1, hasMore: false, filters: [], sort: [], exactTotal: null, orderHint: null, pendingEdits: [], pendingSql: [], pendingLoading: false }
           }));
         } else {
           store.set({ sources });
@@ -884,7 +1059,17 @@ window.__ModuleLoader__.load({
       }
 
       function closeTable() {
-        store.set({ table: null, view: 'browse' });
+        store.set(state => ({
+          ...state,
+          table: null,
+          view: 'browse',
+          tableData: {
+            ...state.tableData,
+            pendingEdits: [],
+            pendingSql: [],
+            pendingLoading: false
+          }
+        }));
       }
 
       function setPlaygroundSql(sql) {
@@ -1219,6 +1404,10 @@ window.__ModuleLoader__.load({
         selectDatabase,
         selectTable,
         loadTableData,
+        countTableRows,
+        stageCellEdit,
+        discardCellEdits,
+        commitCellEdits,
         refreshTables,
         saveSource,
         testSource,
@@ -1918,16 +2107,18 @@ window.__ModuleLoader__.load({
       return h('span', { className: 'dc-cell-text', title: text }, text);
     }
 
-    function DataTable({ columns, rows, t, onHeaderClick, onEditCell, emptyText }) {
+    function DataTable({ columns, rows, t, onHeaderClick, onSort, sort = [], onEditCell, editedCells, emptyText }) {
       if (!Array.isArray(columns) || columns.length === 0) {
         return h('div', { className: 'dc-grid-empty' }, emptyText || t('browse.emptyRows'));
       }
+      const activeSort = Array.isArray(sort) ? sort[0] : null;
       return h('div', { className: 'dc-grid-scroll' },
         h('table', { className: 'dc-grid' },
           h('caption', { className: 'dc-sr-only' }, t('browse.tableCaption')),
           h('thead', null, h('tr', null,
             h('th', { className: 'dc-grid-rownum', scope: 'col' }, '#'),
             columns.map((column, columnIndex) => {
+              const active = activeSort?.field === column.name ? activeSort.dir : null;
               const content = [
                 h('span', { key: 'name', className: 'dc-col-name' }, column.name),
                 column.type ? h('span', { key: 'type', className: 'dc-col-type' }, column.type) : null
@@ -1935,20 +2126,36 @@ window.__ModuleLoader__.load({
               return h('th', {
                 key: `${column.name}-${columnIndex}`,
                 scope: 'col',
-                className: onHeaderClick ? 'dc-grid-th-action' : undefined,
-                title: onHeaderClick ? t('browse.columnFilterHint') : undefined
-              }, onHeaderClick ? h('button', {
-                type: 'button',
-                className: 'dc-grid-th-button',
-                onClick: () => onHeaderClick(column)
-              }, content) : content);
+                className: onSort || onHeaderClick ? 'dc-grid-th-action' : undefined,
+                title: onSort ? t('browse.sortHint') : onHeaderClick ? t('browse.columnFilterHint') : undefined
+              }, onSort || onHeaderClick ? h('div', { className: 'dc-grid-th-inner' },
+                onSort ? h('button', {
+                  type: 'button',
+                  className: 'dc-grid-th-button',
+                  onClick: () => onSort(column)
+                }, h('span', { className: 'dc-grid-th-labels' }, content),
+                active ? h('span', { className: 'dc-sort-mark' }, active === 'asc' ? '↑' : '↓') : null) : content,
+                onHeaderClick ? h('button', {
+                  type: 'button',
+                  className: 'dc-grid-th-filter',
+                  title: t('browse.columnFilterHint'),
+                  'aria-label': t('browse.columnFilterHint'),
+                  onClick: event => {
+                    event.stopPropagation();
+                    onHeaderClick(column);
+                  }
+                }, h(Icon, { name: 'filter', size: 11 })) : null
+              ) : content);
             }))),
           h('tbody', null,
             rows && rows.length > 0 ? rows.map((row, rowIndex) => h('tr', { key: rowIndex },
               h('td', { className: 'dc-grid-rownum' }, rowIndex + 1),
               columns.map((column, columnIndex) => h('td', {
                 key: `${column.name}-${columnIndex}`,
-                className: onEditCell ? 'dc-cell-editable' : undefined,
+                className: cx(
+                  onEditCell ? 'dc-cell-editable' : null,
+                  editedCells?.has(`${rowIndex}\0${column.name}`) ? 'dc-cell-pending' : null
+                ),
                 onDoubleClick: onEditCell ? () => onEditCell(column, row, rowIndex) : undefined
               }, h(CellValue, { value: Array.isArray(row) ? row[columnIndex] : row?.[column.name], t })))))
               : h('tr', null, h('td', { className: 'dc-grid-empty-cell', colSpan: columns.length + 1 }, emptyText || t('browse.emptyRows'))))));
@@ -2128,12 +2335,18 @@ window.__ModuleLoader__.load({
       const [filterSeed, setFilterSeed] = React.useState(0);
       const [seedField, setSeedField] = React.useState('');
       const [cellEdit, setCellEdit] = React.useState(null);
-      const [undoing, setUndoing] = React.useState(false);
+      const [pendingBusy, setPendingBusy] = React.useState(false);
+      const [countBusy, setCountBusy] = React.useState(false);
       const filterKey = table?.key || '';
-      const historyKey = table ? JSON.stringify([state.sourceId || '', state.database || '', table.schema || '', table.name]) : '';
-      const cellHistory = historyKey ? state.cellHistory?.[historyKey] || [] : [];
       const editableSource = kind === 'mysql' || kind === 'postgresql';
       const primaryColumns = (data.columns || []).filter(column => column.primaryKey);
+      const pendingEdits = data.pendingEdits || [];
+      const pendingCells = new Set(pendingEdits.map(edit => `${edit.rowIndex}\0${edit.column}`));
+      const totalText = data.exactTotal !== null && data.exactTotal !== undefined
+        ? t('common.rows', { count: num(data.exactTotal) })
+        : data.estimatedTotal !== null && data.estimatedTotal !== undefined
+          ? t('browse.estimatedRows', { count: num(data.estimatedTotal) })
+          : null;
       const editHint = !editableSource
         ? t('browse.unsupportedEdit')
         : primaryColumns.length > 0
@@ -2176,6 +2389,10 @@ window.__ModuleLoader__.load({
           actions.reportError(t('browse.editNoPk'));
           return;
         }
+        if (column.primaryKey) {
+          actions.reportError(t('browse.editPkUnsupported'));
+          return;
+        }
         if (cellEditorKind(column) === 'binary') {
           actions.reportError(t('browse.binaryNotEditable'));
           return;
@@ -2198,34 +2415,64 @@ window.__ModuleLoader__.load({
           if (value === null || value === undefined) throw new Error(`主键字段 ${keyColumn.name} 的值为空，无法定位这一行。`);
           pk[keyColumn.name] = value;
         }
-        const beforeValue = cellHistoryValue(cellEdit.value);
-        const afterPk = { ...pk };
-        if (cellEdit.column.primaryKey) afterPk[cellEdit.column.name] = nextValue;
-        await actions.updateCell(cellEdit.column.name, nextValue, pk);
-        actions.recordCellEdit(historyKey, {
+        await actions.stageCellEdit({
           column: cellEdit.column.name,
-          beforeValue,
-          afterPk
+          value: nextValue,
+          pk,
+          rowIndex: cellEdit.rowIndex,
+          beforeValue: cellHistoryValue(cellEdit.value)
         });
         setCellEdit(null);
-        setNotice({ text: t('browse.cellSaved'), error: false });
-        await actions.loadTableData({ page: data.page });
+        setNotice({ text: t('browse.pendingCount', { count: pendingEdits.length + 1 }), error: false });
       };
-      const undoCellEdit = async () => {
-        const entry = cellHistory[cellHistory.length - 1];
-        if (!entry || undoing) return;
-        setUndoing(true);
+      const cycleSort = column => {
+        const current = (data.sort || [])[0];
+        let next = [{ field: column.name, dir: 'asc' }];
+        if (current?.field === column.name) {
+          next = current.dir === 'asc' ? [{ field: column.name, dir: 'desc' }] : [];
+        }
+        void actions.loadTableData({ page: 1, sort: next });
+      };
+      const countRows = async () => {
+        if (countBusy) return;
+        setCountBusy(true);
         setNotice(null);
         try {
-          await actions.updateCell(entry.column, entry.beforeValue, entry.afterPk);
-          actions.dropCellEdit(historyKey);
-          setNotice({ text: t('browse.cellUndone', { field: entry.column }), error: false });
-          await actions.loadTableData({ page: data.page });
+          await actions.countTableRows();
         } catch (error) {
-          setNotice({ text: `${t('browse.undoFailed')}: ${messageOf(error)}`, error: true });
+          setNotice({ text: messageOf(error), error: true });
         } finally {
-          setUndoing(false);
+          setCountBusy(false);
         }
+      };
+      const commitPending = async () => {
+        if (pendingBusy || pendingEdits.length === 0) return;
+        setPendingBusy(true);
+        setNotice(null);
+        try {
+          const result = await actions.commitCellEdits();
+          setNotice({ text: t('browse.pendingCommitted', { count: num(result?.count ?? pendingEdits.length) }), error: false });
+        } catch (error) {
+          setNotice({ text: `${t('browse.pendingCommitFailed')}: ${messageOf(error)}`, error: true });
+        } finally {
+          setPendingBusy(false);
+        }
+      };
+      const discardPending = async () => {
+        if (pendingBusy) return;
+        setPendingBusy(true);
+        setNotice(null);
+        try {
+          await actions.discardCellEdits();
+        } catch (error) {
+          setNotice({ text: messageOf(error), error: true });
+        } finally {
+          setPendingBusy(false);
+        }
+      };
+      const closeTable = () => {
+        if (pendingEdits.length > 0 && window.confirm(t('browse.pendingLeave')) !== true) return;
+        actions.closeTable();
       };
 
       return h('section', { className: 'dc-content', 'aria-label': table?.label || table?.name || 'Table' },
@@ -2240,23 +2487,22 @@ window.__ModuleLoader__.load({
             editableSource ? h(Button, {
               kind: 'ghost',
               size: 'sm',
-              onClick: () => { void undoCellEdit(); },
-              disabled: cellHistory.length === 0 || undoing || data.loading,
-              title: t('browse.undoHint', { count: cellHistory.length })
-            }, undoing ? h(Spinner, { size: 13 }) : h(Icon, { name: 'undo', size: 14 }), ` ${t('browse.undo')}`,
-              cellHistory.length > 0 ? h('span', { className: 'dc-undo-count' }, cellHistory.length) : null) : null,
+              onClick: () => { void countRows(); },
+              disabled: countBusy || data.loading || pendingEdits.length > 0,
+              title: t('browse.exactCount')
+            }, countBusy ? h(Spinner, { size: 13 }) : h(Icon, { name: 'table', size: 14 }), ` ${countBusy ? t('browse.counting') : t('browse.exactCount')}`) : null,
             h(IconButton, { label: t('browse.refresh'), icon: 'refresh', onClick: () => { void actions.loadTableData({ page: data.page }); } }),
             h(Button, {
               kind: 'secondary',
               size: 'sm',
               onClick: () => { void doExport('structure'); },
-              disabled: exporting !== null
+              disabled: exporting !== null || pendingEdits.length > 0
             }, exporting === 'structure' ? h(Spinner, { size: 13 }) : h(Icon, { name: 'download', size: 14 }), ` ${structureLabel}`),
             h(Button, {
               kind: 'primary',
               size: 'sm',
               onClick: () => { void doExport('data'); },
-              disabled: exporting !== null
+              disabled: exporting !== null || pendingEdits.length > 0
             }, exporting === 'data' ? h(Spinner, { size: 13 }) : h(Icon, { name: 'download', size: 14 }), ` ${dataLabel}`))),
         notice ? h('div', { className: notice.error ? 'dc-inline-error' : 'dc-inline-note' },
           notice.error ? h(Icon, { name: 'alert', size: 14 }) : null,
@@ -2265,14 +2511,14 @@ window.__ModuleLoader__.load({
           h('div', null,
             h('h2', { className: 'dc-content-title' }, tableLabelFor(table, kind, t)),
             h('p', { className: 'dc-content-sub' },
-              [table?.type, table?.schema, data.total !== null && data.total !== undefined ? t('common.rows', { count: num(data.total) }) : null, data.durationMs !== null ? t('sql.duration', { count: num(data.durationMs) }) : null]
+              [table?.type, table?.schema, totalText, data.durationMs !== null ? t('sql.duration', { count: num(data.durationMs) }) : null]
                 .filter(Boolean).join(' · '))),
           h('div', { className: 'dc-table-headline-actions' },
             data.columns?.length > 0 ? h('span', { className: 'dc-hint-inline' }, editHint) : null,
             h('button', {
               type: 'button',
               className: 'dc-link-btn',
-              onClick: () => actions.closeTable()
+              onClick: closeTable
             }, t('browse.closeTable')))),
         h(FilterBar, {
           key: filterKey,
@@ -2283,6 +2529,31 @@ window.__ModuleLoader__.load({
           seedField,
           onApply: filters => { void actions.loadTableData({ page: 1, filters }); }
         }),
+        data.orderHint === 'no_primary_key' ? h('div', { className: 'dc-inline-warn' },
+          h(Icon, { name: 'info', size: 14 }), h('span', null, t('browse.noPkPaging'))) : null,
+        pendingEdits.length > 0 ? h('div', { className: 'dc-pending-bar' },
+          h('div', { className: 'dc-pending-head' },
+            h('div', { className: 'dc-pending-title' },
+              h(Icon, { name: 'edit', size: 14 }),
+              h('strong', null, t('browse.pendingCount', { count: num(pendingEdits.length) })),
+              h('span', { className: 'dc-pending-hint' }, t('browse.pendingHint'))),
+            h('div', { className: 'dc-pending-actions' },
+              h(Button, {
+                kind: 'ghost',
+                size: 'sm',
+                onClick: () => { void discardPending(); },
+                disabled: pendingBusy
+              }, t('browse.discardEdits')),
+              h(Button, {
+                kind: 'primary',
+                size: 'sm',
+                onClick: () => { void commitPending(); },
+                disabled: pendingBusy || data.pendingLoading
+              }, pendingBusy ? h(Spinner, { size: 13 }) : h(Icon, { name: 'check', size: 13 }),
+                ` ${pendingBusy ? t('browse.committing') : t('browse.commitEdits')}`))),
+          h('details', { className: 'dc-pending-sql', open: true },
+            h('summary', null, t('browse.pendingSql'), data.pendingLoading ? ` · ${t('browse.pendingPreview')}` : ''),
+            h('pre', null, (data.pendingSql || []).map(item => item.sql).join('\n\n') || t('browse.pendingPreview')))) : null,
         h('div', { className: 'dc-grid-card', 'aria-busy': data.loading ? 'true' : 'false' },
           data.loading ? h('div', { className: 'dc-grid-loading' }, h(Spinner, { size: 18, label: t('browse.loading') }), t('browse.loading')) : null,
           h(DataTable, {
@@ -2290,7 +2561,10 @@ window.__ModuleLoader__.load({
             rows: data.rows || [],
             t,
             onHeaderClick: seedFilter,
-            onEditCell: editableSource && !undoing && !data.loading ? openCell : undefined,
+            onSort: editableSource ? column => { void cycleSort(column); } : undefined,
+            sort: data.sort || [],
+            editedCells: pendingCells,
+            onEditCell: editableSource && !data.loading ? openCell : undefined,
             emptyText: t('browse.emptyRows')
           })),
         data.truncatedScan ? h('div', { className: 'dc-inline-warn' }, t('browse.truncatedScan')) : null,
@@ -3797,14 +4071,30 @@ window.__ModuleLoader__.load({
 .dc-grid th{position:sticky;top:0;z-index:1;background:var(--dsw-alias-bg-layer-2);border-bottom:.5px solid var(--dsw-alias-border-l1);padding:6px 9px;text-align:start;font-weight:500;color:var(--dsw-alias-label-secondary);white-space:nowrap;vertical-align:bottom;font-size:11px}
 .dc-grid td{padding:5px 9px;border-bottom:.5px solid var(--dsw-alias-border-l1);max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;color:var(--dsw-alias-label-primary)}
 .dc-grid tbody tr:hover td{background:var(--dsw-alias-interactive-bg-hover)}
-.dc-grid-result td{font-family:var(--ds-font-family-code);font-size:11px}
+.dc-grid-result{width:100%;min-width:100%;table-layout:auto}
+.dc-grid-result td{font-family:var(--ds-font-family-code);font-size:11px;max-width:none;overflow:visible;text-overflow:clip;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;vertical-align:top}
+.dc-grid-result .dc-cell-text,.dc-grid-result .dc-json{overflow:visible;text-overflow:clip;white-space:pre-wrap;overflow-wrap:anywhere}
 .dc-grid-rownum{width:42px;min-width:42px;color:var(--dsw-alias-label-tertiary)!important;text-align:right!important;font-variant-numeric:tabular-nums;background:var(--dsw-alias-bg-layer-1);position:sticky;left:0;z-index:1}
 .dc-grid thead .dc-grid-rownum{z-index:2}
 .dc-grid tbody tr:last-child td{border-bottom:0}
 .dc-grid-th-action{padding:0!important}
-.dc-grid-th-button{display:block;width:100%;padding:6px 9px;border:0;background:transparent;color:inherit;text-align:start;font:inherit;cursor:pointer;white-space:nowrap}
+.dc-grid-th-inner{display:flex;align-items:stretch;min-width:0}
+.dc-grid-th-button{display:flex;align-items:center;gap:4px;flex:1;min-width:0;padding:6px 4px 6px 9px;border:0;background:transparent;color:inherit;text-align:start;font:inherit;cursor:pointer;white-space:nowrap}
+.dc-grid-th-labels{display:block;min-width:0;overflow:hidden}
+.dc-grid-th-filter{display:inline-flex;align-items:center;justify-content:center;width:22px;border:0;background:transparent;color:var(--dsw-alias-label-tertiary);cursor:pointer;flex:none}
+.dc-grid-th-filter:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
+.dc-sort-mark{color:var(--dsw-alias-brand-primary);font-size:11px;line-height:12px}
 .dc-grid-th-action:hover .dc-grid-th-button{color:var(--dsw-alias-label-primary)}
-.dc-grid-th-button:focus-visible{outline:var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color);outline-offset:-2px}
+.dc-grid-th-button:focus-visible,.dc-grid-th-filter:focus-visible{outline:var(--dsw-focus-ring-width) solid var(--dsw-focus-ring-color);outline-offset:-2px}
+.dc-cell-pending{background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 8%,transparent)!important}
+.dc-pending-bar{display:flex;flex-direction:column;gap:6px;padding:8px 10px;margin:4px 0;border:.5px solid color-mix(in srgb,var(--dsw-alias-state-warn-primary) 40%,var(--dsw-alias-border-l1));border-radius:var(--dsw-radius-md);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 5%,var(--dsw-alias-bg-layer-1));flex:none}
+.dc-pending-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.dc-pending-title{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap;font-size:11.5px}
+.dc-pending-title strong{color:var(--dsw-alias-state-warn-primary)}
+.dc-pending-hint{color:var(--dsw-alias-label-tertiary);font-size:10.5px}
+.dc-pending-actions{display:flex;gap:5px;flex:none}
+.dc-pending-sql summary{cursor:pointer;color:var(--dsw-alias-label-secondary);font-size:10.5px;user-select:none}
+.dc-pending-sql pre{max-height:150px;overflow:auto;margin:6px 0 0;padding:7px 8px;border-radius:var(--dsw-radius-xs);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);font-family:var(--ds-font-family-code);font-size:10px;line-height:15px;white-space:pre-wrap;word-break:break-word}
 .dc-col-name{display:block;color:inherit}
 .dc-col-type{display:block;font-weight:400;font-size:9.5px;line-height:13px;color:var(--dsw-alias-label-tertiary);max-width:180px;overflow:hidden;text-overflow:ellipsis}
 .dc-grid-empty-cell{padding:26px 12px!important;text-align:center!important;color:var(--dsw-alias-label-tertiary)!important;white-space:normal!important}
@@ -4046,10 +4336,10 @@ html[data-platform='darwin'] .dc-header{padding-top:calc(10px + var(--dsh-frame-
     function apply(ctx) {
       currentContext = ctx;
       store = createStore();
-      actions = createActions();
       installStyle(ctx);
       ctx.effect(() => ctx.locale.register(LOCALE_NS, dictionaries()), 'dshcat: locale dictionaries');
       const t = ctx.locale.bind(LOCALE_NS);
+      actions = createActions(t);
       ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
         name: 'sidebar.panellist',
         id: PANEL_ID,

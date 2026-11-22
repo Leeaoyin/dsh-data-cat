@@ -7,6 +7,8 @@ node_modules/
 .env
 .env.*
 /datasources.json
+/.credentials.yaml
+/audit.jsonl
 
 .DS_Store
 Thumbs.db

@@ -22,7 +22,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "test": "node --test tests/*.test.mjs"
   },
   "exports": {
     ".": "./index.js",
@@ -46,7 +47,8 @@
     "@elastic/elasticsearch": "^9.5.1",
     "mysql2": "^3.24.6",
     "pg": "^8.23.1",
-    "redis": "^6.3.1"
+    "redis": "^6.3.1",
+    "xlsx": "0.18.5"
   },
   "dsh": {
     "bundle": {

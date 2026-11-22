@@ -2,7 +2,7 @@
 
 import { DshCatApi } from './lib/api.js';
 
-export const inject = ['connection'];
+export const inject = ['connection', 'credentials'];
 
 export async function apply(ctx) {
   const api = new DshCatApi(ctx);
